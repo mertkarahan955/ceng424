@@ -11,6 +11,10 @@ User clarified:
 - Beads will be red, blue, and green.
 - Each color maps to exactly one medication category.
 - Beads are double-holed and roughly 6-12 mm diameter.
+- Later bead decision: selected beads will be 10 mm diameter.
+  - Green: Hobimos 10 mm green wooden beads, 20 pieces.
+  - Red: Fiolimore 10 mm red wooden beads, 50 g, about 135 pieces, 4 mm hole.
+  - Blue: 312 Konsept 10 mm blue plastic beads.
 - Multiple beads may be dispensed in one schedule.
 - Priz/wall power is acceptable.
 - Servo power can be separate from Arduino power.
@@ -23,6 +27,7 @@ Updated recommendation:
 - Use SG90 servos if keeping cost low, but buy spares. Hybrid is also reasonable.
 - Prefer TCS34725 over TCS3200 if proposal/component fidelity is flexible, because implementation is easier and it uses fewer Arduino pins.
 - Avoid mixed bead diameters if possible. Buy one consistent diameter, ideally around 8-10 mm. A gate sized for 12 mm may double-feed 6 mm beads; a gate sized for 6 mm will jam 10-12 mm beads.
+- Since the selected beads are 10 mm, design gates/channels around a 10 mm nominal bead. First mechanical target: 11-12 mm clear opening for one bead, then tune with tape/cardboard inserts if double-feed occurs.
 
 ## Current Understanding
 
@@ -187,6 +192,16 @@ Recommended mitigation:
 - Prefer opaque/matte beads over translucent or glossy beads.
 - Read color multiple times while the bead is stationary in a small pocket, then classify using normalized ratios such as red/(r+g+b), green/(r+g+b), blue/(r+g+b).
 - Design the sensing pocket so the bead is close to the sensor but not pressed onto it; 3-8 mm is a practical first target for TCS34725 modules.
+
+Selected-bead-specific notes:
+
+- 10 mm fixed diameter is good and removes the biggest gate-design uncertainty.
+- Green pack has only 20 pieces. The proposal test originally mentions 30 pieces per color, so buy at least 2 packs of green if the test target stays 30/color.
+- Red pack has enough quantity for repeated trials.
+- Blue quantity should be checked before purchase; target at least 40-50 pieces to cover testing losses and repeated schedules.
+- Mixed material is acceptable for red/green/blue distinction, but blue plastic may reflect light differently than red/green wooden beads. This is fine if classification uses normalized RGB ratios rather than raw brightness.
+- If blue plastic is glossy/translucent, the chamber should use consistent LED illumination and multiple readings per bead.
+- Red has a 4 mm hole according to the product title. Similar hole sizes are fine, but the firmware should tolerate darker readings when the sensor sees into the hole.
 
 ## User Interface Recommendation
 
