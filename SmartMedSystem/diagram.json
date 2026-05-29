@@ -1,0 +1,113 @@
+{
+  "version": 1,
+  "author": "SmartMedSystem",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "wokwi-esp32-devkit-v1",
+      "id": "esp",
+      "top": 200,
+      "left": 300,
+      "attrs": { "env": "arduino-esp32" }
+    },
+    {
+      "type": "wokwi-ili9341",
+      "id": "tft",
+      "top": 0,
+      "left": -250,
+      "attrs": { "width": "240", "height": "320" }
+    },
+    {
+      "type": "wokwi-ds1307",
+      "id": "rtc",
+      "top": 50,
+      "left": 700,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-servo",
+      "id": "servo_sort",
+      "top": 550,
+      "left": 0,
+      "attrs": { "horn": "single" }
+    },
+    {
+      "type": "wokwi-servo",
+      "id": "servo_a",
+      "top": 550,
+      "left": 150,
+      "attrs": { "horn": "single" }
+    },
+    {
+      "type": "wokwi-servo",
+      "id": "servo_b",
+      "top": 550,
+      "left": 300,
+      "attrs": { "horn": "single" }
+    },
+    {
+      "type": "wokwi-servo",
+      "id": "servo_c",
+      "top": 550,
+      "left": 450,
+      "attrs": { "horn": "single" }
+    },
+    {
+      "type": "wokwi-ir-sensor",
+      "id": "ir1",
+      "top": 400,
+      "left": 700,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-ir-sensor",
+      "id": "ir2",
+      "top": 460,
+      "left": 700,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-buzzer",
+      "id": "buzzer",
+      "top": 400,
+      "left": 850,
+      "attrs": { "volume": "0.5" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r_buzzer",
+      "top": 420,
+      "left": 790,
+      "attrs": { "value": "1000" }
+    }
+  ],
+  "connections": [
+    ["esp:3V3", "tft:VCC", "red", []],
+    ["esp:GND.1", "tft:GND", "black", []],
+    ["esp:3V3", "tft:LED", "red", []],
+    ["esp:IO23", "tft:MOSI", "blue", []],
+    ["esp:IO18", "tft:CLK", "green", []],
+    ["esp:IO19", "tft:MISO", "yellow", []],
+    ["esp:IO15", "tft:CS", "orange", []],
+    ["esp:IO27", "tft:DC", "purple", []],
+    ["esp:IO4", "tft:RST", "white", []],
+
+    ["esp:3V3", "rtc:VCC", "red", []],
+    ["esp:GND.2", "rtc:GND", "black", []],
+    ["esp:IO21", "rtc:SDA", "blue", []],
+    ["esp:IO22", "rtc:SCL", "green", []],
+
+    ["esp:IO34", "ir1:OUT", "orange", []],
+    ["esp:3V3", "ir1:VCC", "red", []],
+    ["esp:GND.3", "ir1:GND", "black", []],
+
+    ["esp:IO35", "ir2:OUT", "orange", []],
+    ["esp:3V3", "ir2:VCC", "red", []],
+    ["esp:GND.4", "ir2:GND", "black", []],
+
+    ["esp:IO26", "r_buzzer:1", "purple", []],
+    ["r_buzzer:2", "buzzer:1", "purple", []],
+    ["esp:GND.5", "buzzer:2", "black", []]
+  ],
+  "dependencies": {}
+}
