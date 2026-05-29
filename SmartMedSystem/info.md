@@ -8,7 +8,7 @@
 CENG424 Embedded Computer Systems dersi final projesi. Arduino Uno tabanlı proposal, ESP32 + TFT ekranlı gerçek implementasyona yükseltildi.
 
 **Temel işlev:**
-1. Bulk yüklenen renkli boncukları (ilaç proxy) TCS34725 renk sensörü ile sınıflandır
+1. Bulk yüklenen renkli boncukları (ilaç proxy) TCS3200 renk sensörü ile sınıflandır
 2. PCA9685 üzerinden servo motorlarla doğru compartment'a yönlendir
 3. DS3231 RTC ile belirlenen saatte ilgili compartment'ı aç, boncuğu tray'e bırak
 4. TFT touch ekran üzerinden kullanıcı arayüzü sun
@@ -21,7 +21,7 @@ CENG424 Embedded Computer Systems dersi final projesi. Arduino Uno tabanlı prop
 |---|---|---|
 | Mikrodenetleyici | ESP32-WROOM-32U (30-pin DevKit) | ✅ Breadboard'da |
 | TFT Ekran | 2.8" ILI9341 240x320 SPI + XPT2046 touch + SD slot | ✅ Çalışıyor |
-| Renk Sensörü | TCS34725 (I2C, 0x29) | ❌ Henüz bağlanmadı |
+| Renk Sensörü | TCS3200 (Frekans tabanlı, GPIO) | ✅ Çalışıyor |
 | RTC | DS3231 (I2C, 0x68) + CR2032 | ❌ Henüz bağlanmadı |
 | PWM Servo Driver | PCA9685 (I2C, 0x40) | ❌ Henüz bağlanmadı |
 | Servo Motorlar | MG90S x8 (6 aktif + 2 yedek) | ❌ Henüz bağlanmadı |
@@ -68,28 +68,44 @@ G, H, I satırları boş → jumper kablo alanı
 
 **14-pin konnektör sırası (soldan sağa):** T_IRQ · T_DO · T_DIN · T_CS · T_CLK · SDO(MISO) · LED · SCK · SDI(MOSI) · DC · RESET · CS · GND · VCC
 
+### TCS3200 Renk Sensörü (✅ Çalışıyor)
+
+| TCS3200 Pin | ESP32 GPIO | Not |
+|---|---|---|
+| VCC | 3.3V | |
+| GND | GND | |
+| LED | 3.3V | Dahili LED hep açık |
+| S0 | GPIO 13 | Frekans ölçeği: S0=HIGH, S1=HIGH → %100 |
+| S1 | GPIO 25 | |
+| S2 | GPIO 14 | Filtre seçimi (LOW/LOW=K, HIGH/HIGH=Y, LOW/HIGH=M) |
+| S3 | GPIO 26 | ⚠️ Buzzer ile çakışıyor — buzzer GPIO16'ya taşınacak |
+| OUT | GPIO 32 | pulseIn() ile frekans ölçümü — T_IRQ iptali (opsiyonel) |
+
+**Çalışma mantığı:** Düşük pulseIn değeri = o renk baskın. K < Y ve K < M → Kırmızı.
+
+**Timeout:** 80.000 µs (80ms). 0 dönerse sensör önü boş.
+
 ### I2C Bus (Henüz bağlanmadı)
 
 | Cihaz | GPIO | Not |
 |---|---|---|
-| SDA | GPIO 21 | TCS34725 + DS3231 + PCA9685 hepsi aynı hatta |
-| SCL | GPIO 22 | TCS34725 + DS3231 + PCA9685 hepsi aynı hatta |
+| SDA | GPIO 21 | DS3231 + PCA9685 aynı hatta |
+| SCL | GPIO 22 | DS3231 + PCA9685 aynı hatta |
 
 ### I2C Adresleri
 
 | Cihaz | Adres |
 |---|---|
-| TCS34725 | 0x29 |
 | DS3231 | 0x68 |
 | PCA9685 | 0x40 |
 
-### Diğer GPIO'lar (Henüz bağlanmadı)
+### Diğer GPIO'lar
 
 | Cihaz | GPIO | Not |
 |---|---|---|
 | TCRT5000 #1 (sensing chamber) | GPIO 34 | Input only, pull-up yok |
 | TCRT5000 #2 (dispensing tray) | GPIO 35 | Input only, pull-up yok |
-| Buzzer (2N2222 base) | GPIO 26 | Transistor driver |
+| Buzzer (2N2222 base) | GPIO 16 | GPIO26'dan taşındı (TCS3200 S3 çakışması) |
 
 ### PCA9685 Servo Kanal Ataması (Planlanmış)
 
@@ -158,7 +174,7 @@ build_flags =
 ```
 IDLE
  ├── TCRT5000 #1 trigger → SENSING
- │     └── TCS34725 RGB oku → CLASSIFYING
+ │     └── TCS3200 renk oku → CLASSIFYING
  │           ├── Renk eşleşti → SORTING (PCA9685 servo döndür) → IDLE
  │           └── Eşleşmedi → ERROR (buzzer + ekran) → manuel reset → IDLE
  │
@@ -181,7 +197,7 @@ IDLE
 | Yeşil | B | 90° |
 | Mavi | C | 180° |
 
-**TCS34725 kalibrasyon notu:** Her renk için önce ham RGB değerleri okunacak, threshold map bu değerlere göre ayarlanacak. Sensing chamber kapalı (karanlık) olmalı — ambient ışık etkisini ortadan kaldırmak için siyah PLA veya karanlık kutu kullanılacak.
+**TCS3200 kalibrasyon notu:** pulseIn() ile frekans ölçülür — düşük değer = o renk baskın. "Hangisi minimum" karşılaştırması ile renk tespiti yapılır. Sensing chamber kapalı (karanlık) olmalı — ambient ışık yeşil kanalını özellikle bozuyor.
 
 ---
 
@@ -210,10 +226,19 @@ ILI9341 240x320, landscape modda kullanılacak (320x240):
 
 ## 8. Sıradaki Adımlar (Öncelik Sırasıyla)
 
-### Adım 1 — I2C Tarama (Önce yap)
+### ✅ Tamamlanan — TFT ILI9341
+- SPI bağlantısı çalışıyor, renk + yazı gösteriyor
+
+### ✅ Tamamlanan — TCS3200 Renk Sensörü
+- GPIO 13/25/14/26/32 üzerinden bağlı
+- pulseIn ile K/Y/M okuma çalışıyor
+- TFT ile entegre: boncuk rengini ekranda gösteriyor
+- Kalibrasyon: sensing chamber (karanlık kutu) ile iyileştirilecek
+
+### Adım 1 — I2C Tarama
 ```cpp
-// i2c_scanner.ino ile DS3231, TCS34725, PCA9685 adreslerini doğrula
-// Beklenen: 0x29, 0x40, 0x68
+// DS3231 + PCA9685 adreslerini doğrula
+// Beklenen: 0x40 (PCA9685), 0x68 (DS3231)
 ```
 
 ### Adım 2 — DS3231 RTC Entegrasyonu
@@ -221,27 +246,22 @@ ILI9341 240x320, landscape modda kullanılacak (320x240):
 - RTClib kütüphanesi ile saat oku
 - Ekranda göster
 
-### Adım 3 — TCS34725 Renk Sensörü
-- I2C üzerinden bağla (DS3231 ile aynı bus)
-- Ham RGB değerleri oku
-- Kalibrasyon: Her renk için threshold belirle
-
-### Adım 4 — PCA9685 + Servo Test
+### Adım 3 — PCA9685 + Servo Test
 - I2C bağla
 - CH0'dan başlayarak her servoyu 0°-90°-180° test et
 - Servo PWM: min=150, max=600 (SG90/MG90S için)
 
-### Adım 5 — TCRT5000 Bağlantısı
+### Adım 4 — TCRT5000 Bağlantısı
 - GPIO34 ve GPIO35 (input only)
 - TCRT5000 modülleri dahili pull-up içeriyor
 - Digital okuma ile presence detection test et
 
-### Adım 6 — FSM Entegrasyonu
+### Adım 5 — FSM Entegrasyonu
 - Tüm modüller çalışınca FSM kodunu yaz
 - millis() tabanlı non-blocking yapı kullan
 - FreeRTOS task kullanma — basit FSM yeterli
 
-### Adım 7 — Touch UI
+### Adım 6 — Touch UI
 - TFT_eSPI + XPT2046 ile touch kalibrasyon
 - Schedule giriş ekranı
 - Durum ekranı
